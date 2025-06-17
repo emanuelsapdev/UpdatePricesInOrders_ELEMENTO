@@ -31,7 +31,7 @@ namespace UpdatePricesInOrders_Interface.Services.SDK
                 _oCompany.CompanyDB = _appSettings.DIAPI.CompanyDB;
                 _oCompany.DbUserName = _appSettings.DIAPI.DbUserName;
                 _oCompany.DbPassword = _appSettings.DIAPI.DbPassword;
-                _oCompany.DbServerType = SAPbobsCOM.BoDataServerTypes.dst_HANADB;
+                _oCompany.DbServerType = SAPbobsCOM.BoDataServerTypes.dst_MSSQL2019;
             }
         }
 

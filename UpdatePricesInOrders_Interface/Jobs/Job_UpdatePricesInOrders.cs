@@ -24,7 +24,7 @@ using Microsoft.Extensions.Configuration;
 using UpdatePricesInOrders_Interface.Tools;
 
 
-namespace UpdatePricesInOrders_Interface.Job_UpdatePricesInOrders
+namespace UpdatePricesInOrders_Interface.Jobs
 {
 
     [DisallowConcurrentExecution]

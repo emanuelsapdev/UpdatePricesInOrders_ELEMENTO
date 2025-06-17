@@ -20,11 +20,11 @@ namespace UpdatePricesInOrders_Interface.Settings
         {
             if (env == EEnvironment.PRODUCTION)
             {
-                _SBO = "SERVERNODE={192.168.0.166:30015};DSN=HANA;UID=SYSTEM;PWD=CafeInitial0;CS=CAFE_MARTINEZ_ITPS_PROD;databaseName=NDB";
+                _SBO = "SERVERNODE={WIN-RUB2NQTEU9L};DSN=HANA;UID=SA;PWD=EleInitial0;CS=TEST_SBO_STS2_DB_2024OCT;databaseName=NDB";
             }
             else if (env == EEnvironment.DEVELOPMENT)
             {
-                _SBO = "SERVERNODE={192.168.0.166:30015};DSN=HANA;UID=SYSTEM;PWD=CafeInitial0;CS=BASE_DE_SOPORTESAP;databaseName=NDB";
+                _SBO = "SERVERNODE={WIN-RUB2NQTEU9L};DSN=HANA;UID=SA;PWD=EleInitial0;CS=TEST_SBO_STS2_DB_2024OCT;databaseName=NDB";
             }
         }
 

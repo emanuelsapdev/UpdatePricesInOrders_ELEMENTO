@@ -15,7 +15,7 @@ using Microsoft.AspNetCore.Hosting.Server;
 using Microsoft.Extensions.Configuration;
 using SAPbobsCOM;
 
-namespace UpdatePricesInOrders_Interface.Job_UpdatePricesInOrders
+namespace UpdatePricesInOrders_Interface.Jobs
 {
     public class Helpers_Job_UpdatePricesInOrders
     {

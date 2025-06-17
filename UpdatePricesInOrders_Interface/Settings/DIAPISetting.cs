@@ -40,11 +40,11 @@ namespace UpdatePricesInOrders_Interface.Settings
             if (env == EEnvironment.PRODUCTION)
             {
                 _Server = "WIN-RUB2NQTEU9L";
-                _CompanyDB = "GBS";
+                _CompanyDB = "TEST_SBO_STS2_DB_2024OCT";
                 _DbUserName = "SA";
                 _DbPassword = "EleInitial0";
-                _UserName = "manager";
-                _Password = "Silla123$";
+                _UserName = "HVECCHIO";
+                _Password = "2023!!";
             }
             else if (env == EEnvironment.DEVELOPMENT)
             {
@@ -52,8 +52,8 @@ namespace UpdatePricesInOrders_Interface.Settings
                 _CompanyDB = "TEST_SBO_STS2_DB_2024OCT";
                 _DbUserName = "SA";
                 _DbPassword = "EleInitial0";
-                _UserName = "manager";
-                _Password = "Silla123$";
+                _UserName = "HVECCHIO";
+                _Password = "2023!!";
             }
         }
     }

@@ -1,11 +1,4 @@
-﻿using Interface_SendDocsByMail;
-using Interface_SendJSONStockConsolid;
-using UpdatePricesInOrders.Job_UpdatePricesInOrders;
-
-using UpdatePricesInOrders.ModelsGeneral;
-using UpdatePricesInOrders.Services.SDK;
-using UpdatePricesInOrders.Settings;
-using log4net;
+﻿using log4net;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Hosting;
@@ -22,7 +15,8 @@ using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-
+using UpdatePricesInOrders_Interface.Services.SDK;
+using UpdatePricesInOrders_Interface.Jobs;
 
 namespace UpdatePricesInOrders_Interface
 {
