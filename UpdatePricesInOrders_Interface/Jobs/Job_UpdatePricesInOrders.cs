@@ -42,7 +42,6 @@ namespace UpdatePricesInOrders_Interface.Jobs
         private static SAPbobsCOM.Company _company { get; set; }
         public static NLog.ILogger _log { get; set; }
         private static SAPbobsCOM.Recordset _oRecorset { get; set; }
-
      
         public Job_UpdatePricesInOrders()
         {
@@ -52,14 +51,14 @@ namespace UpdatePricesInOrders_Interface.Jobs
 
             _log = NLog.LogManager.GetCurrentClassLogger();
 
-            //_config = new Microsoft.Extensions.Configuration.ConfigurationBuilder()
-            //.SetBasePath(Directory.GetCurrentDirectory())
-            //.AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
-            //.Build();
+            _config = new Microsoft.Extensions.Configuration.ConfigurationBuilder()
+            .SetBasePath(Directory.GetCurrentDirectory())
+            .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+            .Build();
 
             _appSetting = new AppSettings();
 
-            //Helpers_Job1_SendDocsElectronicByMail.Configuration = _config;
+            Helpers_Job_UpdatePricesInOrders.Configuration = _config;
             Helpers_Job_UpdatePricesInOrders.AppSetting = _appSetting;
             Helpers_Job_UpdatePricesInOrders.Log = _log;
             Helpers_Job_UpdatePricesInOrders.Company = _company;
@@ -77,9 +76,57 @@ namespace UpdatePricesInOrders_Interface.Jobs
 
                 else
                 {
-                   
+                    string priceList = _config["PriceListBased"];
+
+                    _oRecorset = _company.GetBusinessObject(BoObjectTypes.BoRecordset);
+                    string qOrds = $@"SELECT T0.DocEntry, T1.ItemCode, T2.Price AS NewPrice, T1.OpenQty, T1.Quantity, T1.LineNum
+                                    FROM ORDR T0
+                                    INNER JOIN RDR1 T1 
+                                    ON T1.DocEntry = T0.DocEntry AND (T1.Quantity = T1.OpenQty OR (T1.Quantity > T1.OpenQty AND T1.OpenQty > 0))
+                                    INNER JOIN ITM1 T2 ON T2.ItemCode = T1.ItemCode AND T2.PriceList = {priceList}
+                                    WHERE T0.CANCELED = 'N' AND T0.DocStatus = 'O' AND ISNULL(T0.AgrNo, 0) = 0";
+
+                    _oRecorset.DoQuery(qOrds);
+
+                    while (!_oRecorset.EoF)
+                    {
+                        try
+                        {
+                            int docEntry = _oRecorset.Fields.Item("DocEntry").Value;
+                            string itemCode = _oRecorset.Fields.Item("ItemCode").Value;
+                            double newPrice = _oRecorset.Fields.Item("NewPrice").Value;
+                            double quantityPending = _oRecorset.Fields.Item("OpenQty").Value;
+                            double quantity = _oRecorset.Fields.Item("Quantity").Value;
+                            int lineNum = _oRecorset.Fields.Item("LineNum").Value;
+
+                            if (quantity == quantityPending)  // Linea completamente abierta
+                            {
+                                SAPbobsCOM.Documents oOrder = _company.GetBusinessObject(BoObjectTypes.oOrders);
+                                oOrder.GetByKey(docEntry);
+
+                                oOrder.Lines.SetCurrentLine(lineNum);
+                                oOrder.Lines.Price = newPrice;
+
+                                oOrder.Update();
+
+                            }
+                            else if (quantity > quantityPending) // Linea parcialmente abierta
+                            { 
+                                // TODO: Cerrar la linea y con esos datos crear un nuevo pedido (Consultar a Fer)
+                            }
+                        } catch (Exception ex)
+                        {
+                            Console.WriteLine(ex.Message);
+                            _log.Error(ex.Message);
+                        }
+                        finally {
+                            _oRecorset.MoveNext();
+                        }
+                    }
+
                     // code..
                     
+
                 }
 
             }

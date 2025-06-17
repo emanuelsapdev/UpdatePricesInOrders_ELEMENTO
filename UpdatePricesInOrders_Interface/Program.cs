@@ -36,8 +36,12 @@ namespace UpdatePricesInOrders_Interface
 
                    var connection = new ConnectionDIAPI();
                    connection.Connect();
-
-                   q.AddJobAndTrigger<Job_UpdatePricesInOrders>(hostContext.Configuration);
+                   
+                   var config = new Microsoft.Extensions.Configuration.ConfigurationBuilder()
+                   .SetBasePath(Directory.GetCurrentDirectory())
+                   .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true)
+                   .Build();
+                   q.AddJobAndTrigger<Job_UpdatePricesInOrders>(config);
 
 
                    connection.Disconnect();

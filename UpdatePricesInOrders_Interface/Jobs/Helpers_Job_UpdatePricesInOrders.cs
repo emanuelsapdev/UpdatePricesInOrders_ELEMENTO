@@ -22,8 +22,9 @@ namespace UpdatePricesInOrders_Interface.Jobs
         public static IAppSettings AppSetting {  get; set; }
         public static NLog.ILogger Log {  get; set; }
         public static SAPbobsCOM.Company Company {  get; set; }
+        public static IConfiguration Configuration {  get; set; }
 
-
+        
         
     }
 }
