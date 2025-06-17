@@ -92,27 +92,35 @@ namespace UpdatePricesInOrders_Interface.Jobs
                     {
                         try
                         {
-                            int docEntry = _oRecorset.Fields.Item("DocEntry").Value;
-                            string itemCode = _oRecorset.Fields.Item("ItemCode").Value;
-                            double newPrice = _oRecorset.Fields.Item("NewPrice").Value;
-                            double quantityPending = _oRecorset.Fields.Item("OpenQty").Value;
-                            double quantity = _oRecorset.Fields.Item("Quantity").Value;
-                            int lineNum = _oRecorset.Fields.Item("LineNum").Value;
+                            int vDocEntry = _oRecorset.Fields.Item("DocEntry").Value;
+                            string vItemCode = _oRecorset.Fields.Item("ItemCode").Value;
+                            double vNewPrice = _oRecorset.Fields.Item("NewPrice").Value;
+                            double vQuantityPending = _oRecorset.Fields.Item("OpenQty").Value;
+                            double vQuantity = _oRecorset.Fields.Item("Quantity").Value;
+                            int vLineNum = _oRecorset.Fields.Item("LineNum").Value;
 
-                            if (quantity == quantityPending)  // Linea completamente abierta
+                            SAPbobsCOM.Documents oOrder = _company.GetBusinessObject(BoObjectTypes.oOrders);
+
+                            if (vQuantity == vQuantityPending) // Linea abierta
                             {
-                                SAPbobsCOM.Documents oOrder = _company.GetBusinessObject(BoObjectTypes.oOrders);
-                                oOrder.GetByKey(docEntry);
+                                oOrder.GetByKey(vDocEntry);
 
-                                oOrder.Lines.SetCurrentLine(lineNum);
-                                oOrder.Lines.Price = newPrice;
+                                oOrder.Lines.SetCurrentLine(vLineNum);
+                                oOrder.Lines.UnitPrice = vNewPrice;
 
-                                oOrder.Update();
+                                if (oOrder.Update() != 0)
+                                {
+                                    Console.WriteLine(_company.GetLastErrorDescription());
+                                }
 
                             }
-                            else if (quantity > quantityPending) // Linea parcialmente abierta
+                            else if (vQuantity > vQuantityPending) // Linea parcialmente abierta
                             { 
+
+
                                 // TODO: Cerrar la linea y con esos datos crear un nuevo pedido (Consultar a Fer)
+
+
                             }
                         } catch (Exception ex)
                         {
