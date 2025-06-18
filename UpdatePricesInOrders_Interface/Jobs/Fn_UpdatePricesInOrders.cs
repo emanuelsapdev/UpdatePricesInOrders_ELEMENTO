@@ -17,14 +17,19 @@ using SAPbobsCOM;
 
 namespace UpdatePricesInOrders_Interface.Jobs
 {
-    public class Helpers_Job_UpdatePricesInOrders
+    public class Fn_UpdatePricesInOrders
     {
         public static IAppSettings AppSetting {  get; set; }
         public static NLog.ILogger Log {  get; set; }
         public static SAPbobsCOM.Company Company {  get; set; }
         public static IConfiguration Configuration {  get; set; }
 
-        
-        
+        public static string GetQueryDataOrder()
+        {
+            string priceList = Configuration["PriceListBased"];
+            return $@;
+
+        }
+
     }
 }

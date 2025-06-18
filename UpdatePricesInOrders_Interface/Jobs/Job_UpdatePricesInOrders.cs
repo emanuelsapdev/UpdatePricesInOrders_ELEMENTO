@@ -22,6 +22,7 @@ using System.Runtime.InteropServices;
 using log4net;
 using Microsoft.Extensions.Configuration;
 using UpdatePricesInOrders_Interface.Tools;
+using UpdatePricesInOrders_Interface.Mapped;
 
 
 namespace UpdatePricesInOrders_Interface.Jobs
@@ -58,10 +59,10 @@ namespace UpdatePricesInOrders_Interface.Jobs
 
             _appSetting = new AppSettings();
 
-            Helpers_Job_UpdatePricesInOrders.Configuration = _config;
-            Helpers_Job_UpdatePricesInOrders.AppSetting = _appSetting;
-            Helpers_Job_UpdatePricesInOrders.Log = _log;
-            Helpers_Job_UpdatePricesInOrders.Company = _company;
+            Fn_UpdatePricesInOrders.Configuration = _config;
+            Fn_UpdatePricesInOrders.AppSetting = _appSetting;
+            Fn_UpdatePricesInOrders.Log = _log;
+            Fn_UpdatePricesInOrders.Company = _company;
         }
 
         public void Start()
@@ -76,52 +77,71 @@ namespace UpdatePricesInOrders_Interface.Jobs
 
                 else
                 {
-                    string priceList = _config["PriceListBased"];
-
                     _oRecorset = _company.GetBusinessObject(BoObjectTypes.BoRecordset);
-                    string qOrds = $@"SELECT T0.DocEntry, T1.ItemCode, T2.Price AS NewPrice, T1.OpenQty, T1.Quantity, T1.LineNum
-                                    FROM ORDR T0
-                                    INNER JOIN RDR1 T1 
-                                    ON T1.DocEntry = T0.DocEntry AND (T1.Quantity = T1.OpenQty OR (T1.Quantity > T1.OpenQty AND T1.OpenQty > 0))
-                                    INNER JOIN ITM1 T2 ON T2.ItemCode = T1.ItemCode AND T2.PriceList = {priceList}
-                                    WHERE T0.CANCELED = 'N' AND T0.DocStatus = 'O' AND ISNULL(T0.AgrNo, 0) = 0";
-
-                    _oRecorset.DoQuery(qOrds);
+                    string query = "SELECT * FROM ITPS_UPDATE_ORDERS";
+                    _oRecorset.DoQuery(query);
 
                     while (!_oRecorset.EoF)
                     {
                         try
                         {
-                            int vDocEntry = _oRecorset.Fields.Item("DocEntry").Value;
-                            string vItemCode = _oRecorset.Fields.Item("ItemCode").Value;
-                            double vNewPrice = _oRecorset.Fields.Item("NewPrice").Value;
-                            double vQuantityPending = _oRecorset.Fields.Item("OpenQty").Value;
-                            double vQuantity = _oRecorset.Fields.Item("Quantity").Value;
-                            int vLineNum = _oRecorset.Fields.Item("LineNum").Value;
-
+                            var data = OrderMapped.FromRecordset(_oRecorset);
+                            
                             SAPbobsCOM.Documents oOrder = _company.GetBusinessObject(BoObjectTypes.oOrders);
+                            oOrder.GetByKey(data.vDocEntry);
+                            string msgSuccess = $"Orden Nro: {oOrder.DocNum} actualizada con éxito. Articulo: {data.vItemCode}, Linea: {data.vLineNum + 1}, Precio anterior: $ {data.vCurrPrice}, Nuevo precio: $ {data.vNewPrice}";
 
-                            if (vQuantity == vQuantityPending) // Linea abierta
+                            // LINEA SIN ENTREGA
+                            if (data.vQuantity == data.vQuantityPending) 
                             {
-                                oOrder.GetByKey(vDocEntry);
-
-                                oOrder.Lines.SetCurrentLine(vLineNum);
-                                oOrder.Lines.UnitPrice = vNewPrice;
+                                // Asignamos el nuevo precio a la linea abierta
+                                oOrder.Lines.SetCurrentLine(data.vLineNum);
+                                oOrder.Lines.UnitPrice = data.vNewPrice;
 
                                 if (oOrder.Update() != 0)
                                 {
                                     Console.WriteLine(_company.GetLastErrorDescription());
+                                    _log.Error(_company.GetLastErrorDescription());
+                                } 
+                                else
+                                {
+                                    _log.Info(msgSuccess);
+                                }
+
+                            }       // LINEA CON ENTREGA PARCIAL
+                            else if (data.vQuantity > data.vQuantityPending) 
+                            {
+                                // Cerramos la linea parcial
+                                oOrder.Lines.SetCurrentLine(data.vLineNum);
+                                oOrder.Lines.LineStatus = BoStatus.bost_Close;
+                                string vIndicatorIVA = oOrder.Lines.TaxCode;
+                                double vDiscount = oOrder.Lines.DiscountPercent;
+                                if (oOrder.Update() != 0)
+                                {
+                                    Console.WriteLine(_company.GetLastErrorDescription());
+                                    _log.Error(_company.GetLastErrorDescription());
+                                }
+
+                                // Agregamos nueva linea al documento
+                                oOrder.Lines.Add();
+                                oOrder.Lines.ItemCode = data.vItemCode;
+                                oOrder.Lines.UnitPrice = data.vNewPrice;
+                                oOrder.Lines.TaxCode = vIndicatorIVA;
+                                oOrder.Lines.DiscountPercent = vDiscount;
+                                oOrder.Lines.Quantity = data.vQuantityPending;
+                                if (oOrder.Update() != 0)
+                                {
+                                    Console.WriteLine(_company.GetLastErrorDescription());
+                                    _log.Error(_company.GetLastErrorDescription());
+                                }
+                                else
+                                {
+                                    _log.Info(msgSuccess);
                                 }
 
                             }
-                            else if (vQuantity > vQuantityPending) // Linea parcialmente abierta
-                            { 
 
-
-                                // TODO: Cerrar la linea y con esos datos crear un nuevo pedido (Consultar a Fer)
-
-
-                            }
+                            
                         } catch (Exception ex)
                         {
                             Console.WriteLine(ex.Message);
@@ -130,16 +150,14 @@ namespace UpdatePricesInOrders_Interface.Jobs
                         finally {
                             _oRecorset.MoveNext();
                         }
-                    }
-
-                    // code..
-                    
+                    }                 
 
                 }
 
             }
             catch (Exception ex)
             {
+                Console.WriteLine(ex.Message);
                 _log.Error(ex.ToString());
             }
             finally 
