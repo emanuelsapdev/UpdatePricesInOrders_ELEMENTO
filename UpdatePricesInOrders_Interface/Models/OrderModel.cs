@@ -15,5 +15,7 @@ namespace UpdatePricesInOrders_Interface.Models
         public double vQuantityPending { get; set; }
         public double vQuantity { get; set; }
         public int vLineNum { get; set; }
+        public string vListName { get; set; }
+        public DateTime vDateUpdate { get; set; }
     }
 }

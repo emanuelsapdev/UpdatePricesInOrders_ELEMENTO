@@ -19,6 +19,8 @@ namespace UpdatePricesInOrders_Interface.Mapped
             data.vQuantityPending = pRec.Fields.Item("OpenQty").Value;
             data.vQuantity = pRec.Fields.Item("Quantity").Value;
             data.vLineNum = pRec.Fields.Item("LineNum").Value;
+            data.vListName = pRec.Fields.Item("ListName").Value;
+            data.vDateUpdate = DateTime.Now;
             return data;
         }
 

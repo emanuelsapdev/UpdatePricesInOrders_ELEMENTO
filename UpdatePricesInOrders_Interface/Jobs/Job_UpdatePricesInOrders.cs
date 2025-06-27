@@ -91,57 +91,68 @@ namespace UpdatePricesInOrders_Interface.Jobs
                             oOrder.GetByKey(data.vDocEntry);
                             string msgSuccess = $"Orden Nro: {oOrder.DocNum} actualizada con éxito. Articulo: {data.vItemCode}, Linea: {data.vLineNum + 1}, Precio anterior: $ {data.vCurrPrice}, Nuevo precio: $ {data.vNewPrice}";
 
-                            // LINEA SIN ENTREGA
-                            if (data.vQuantity == data.vQuantityPending) 
+                            oOrder.UserFields.Fields.Item("U_ITPS_BaseListName").Value = data.vListName;
+                            oOrder.UserFields.Fields.Item("U_ITPS_UpdateDateByListPrice").Value = data.vDateUpdate;
+
+                            if (data.vCurrPrice != data.vNewPrice)
                             {
-                                // Asignamos el nuevo precio a la linea abierta
-                                oOrder.Lines.SetCurrentLine(data.vLineNum);
-                                oOrder.Lines.UnitPrice = data.vNewPrice;
 
-                                if (oOrder.Update() != 0)
-                                {
-                                    Console.WriteLine(_company.GetLastErrorDescription());
-                                    _log.Error(_company.GetLastErrorDescription());
-                                } 
-                                else
-                                {
-                                    _log.Info(msgSuccess);
-                                }
 
-                            }       // LINEA CON ENTREGA PARCIAL
-                            else if (data.vQuantity > data.vQuantityPending) 
-                            {
-                                // Cerramos la linea parcial
-                                oOrder.Lines.SetCurrentLine(data.vLineNum);
-                                oOrder.Lines.LineStatus = BoStatus.bost_Close;
-                                string vIndicatorIVA = oOrder.Lines.TaxCode;
-                                double vDiscount = oOrder.Lines.DiscountPercent;
-                                if (oOrder.Update() != 0)
+                                // LINEA SIN ENTREGA
+                                if (data.vQuantity == data.vQuantityPending)
                                 {
-                                    Console.WriteLine(_company.GetLastErrorDescription());
-                                    _log.Error(_company.GetLastErrorDescription());
-                                }
+                                    // Asignamos el nuevo precio a la linea abierta
+                                    oOrder.Lines.SetCurrentLine(data.vLineNum);
+                                    oOrder.Lines.UnitPrice = data.vNewPrice;
 
-                                // Agregamos nueva linea al documento
-                                oOrder.Lines.Add();
-                                oOrder.Lines.ItemCode = data.vItemCode;
-                                oOrder.Lines.UnitPrice = data.vNewPrice;
-                                oOrder.Lines.TaxCode = vIndicatorIVA;
-                                oOrder.Lines.DiscountPercent = vDiscount;
-                                oOrder.Lines.Quantity = data.vQuantityPending;
-                                if (oOrder.Update() != 0)
-                                {
-                                    Console.WriteLine(_company.GetLastErrorDescription());
-                                    _log.Error(_company.GetLastErrorDescription());
-                                }
-                                else
-                                {
-                                    _log.Info(msgSuccess);
-                                }
+                                    if (oOrder.Update() != 0)
+                                    {
+                                        Console.WriteLine(_company.GetLastErrorDescription());
+                                        _log.Error(_company.GetLastErrorDescription());
+                                    }
+                                    else
+                                    {
+                                        _log.Info(msgSuccess);
+                                    }
 
+                                }       // LINEA CON ENTREGA PARCIAL
+                                else if (data.vQuantity > data.vQuantityPending)
+                                {
+                                    // Cerramos la linea parcial
+                                    oOrder.Lines.SetCurrentLine(data.vLineNum);
+                                    oOrder.Lines.LineStatus = BoStatus.bost_Close;
+                                    string vIndicatorIVA = oOrder.Lines.TaxCode;
+                                    double vDiscount = oOrder.Lines.DiscountPercent;
+                                    string vWhsCode = oOrder.Lines.WarehouseCode;
+
+                                    if (oOrder.Update() != 0)
+                                    {
+                                        Console.WriteLine(_company.GetLastErrorDescription());
+                                        _log.Error(_company.GetLastErrorDescription());
+                                    }
+
+                                    // Agregamos nueva linea al documento
+                                    oOrder.Lines.Add();
+                                    oOrder.Lines.ItemCode = data.vItemCode;
+                                    oOrder.Lines.UnitPrice = data.vNewPrice;
+                                    oOrder.Lines.Quantity = data.vQuantityPending;
+                                    oOrder.Lines.TaxCode = vIndicatorIVA;
+                                    oOrder.Lines.DiscountPercent = vDiscount;
+                                    oOrder.Lines.WarehouseCode = vWhsCode;
+
+                                    if (oOrder.Update() != 0)
+                                    {
+                                        Console.WriteLine(_company.GetLastErrorDescription());
+                                        _log.Error(_company.GetLastErrorDescription());
+                                    }
+                                    else
+                                    {
+                                        _log.Info(msgSuccess);
+                                    }
+
+                                }
                             }
 
-                            
                         } catch (Exception ex)
                         {
                             Console.WriteLine(ex.Message);

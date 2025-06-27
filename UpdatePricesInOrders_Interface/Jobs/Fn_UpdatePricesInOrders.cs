@@ -24,12 +24,7 @@ namespace UpdatePricesInOrders_Interface.Jobs
         public static SAPbobsCOM.Company Company {  get; set; }
         public static IConfiguration Configuration {  get; set; }
 
-        public static string GetQueryDataOrder()
-        {
-            string priceList = Configuration["PriceListBased"];
-            return $@;
-
-        }
+        
 
     }
 }
